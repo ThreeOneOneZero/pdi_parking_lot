@@ -1,0 +1,41 @@
+# ---------------------------------------------------------------------------
+# Dados brutos
+# ---------------------------------------------------------------------------
+# O PKLot ocupa ~4,9 GB compactado e nao deve ser versionado.
+# As instrucoes de obtencao estao em docs/dados.md
+data/
+*.tar.gz
+*.zip
+
+# ---------------------------------------------------------------------------
+# Artefatos derivados
+# ---------------------------------------------------------------------------
+# Recortes de vaga, features e modelos sao reproduziveis a partir de data/
+cache/
+models/
+*.npy
+*.npz
+*.joblib
+*.pkl
+
+# As metricas em results/ SAO versionadas: sao pequenas e constituem a
+# evidencia dos experimentos. O que nao entra sao artefatos grandes.
+results/**/*.png
+results/**/*.jpg
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# ---------------------------------------------------------------------------
+# Ambiente / editor
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
