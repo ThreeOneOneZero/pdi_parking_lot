@@ -1,7 +1,5 @@
 # Declaração de Uso de Inteligência Artificial Generativa
 
-Conforme a seção 16 do enunciado do Projeto Aplicado Longitudinal.
-
 **Houve uso de IA generativa neste projeto.**
 Ferramenta utilizada: **Claude (Anthropic)**.
 
@@ -36,12 +34,3 @@ Dúvidas sobre técnicas de PDI, interpretação dos requisitos do enunciado e l
 referências. Não gerou material incorporado diretamente ao repositório.
 
 As referências indicadas foram conferidas nas fontes originais antes de serem citadas.
-
-## Continuidade e responsabilidade
-
-O uso deve continuar na M2 e M3, principalmente em implementação e análise de resultados, e este
-documento será atualizado a cada etapa. Nenhum resultado numérico é reportado sem execução real do
-código correspondente.
-
-O autor é responsável por todo o conteúdo entregue e é capaz de explicar e justificar as decisões
-técnicas apresentadas.

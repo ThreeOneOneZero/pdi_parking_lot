@@ -11,70 +11,82 @@
 
 ### 1.1 Situação inicial
 
-Estacionamentos de grande porte — campi universitários, shoppings, aeroportos, estacionamentos
-públicos — precisam saber, a qualquer momento, **quais vagas estão livres**. A alternativa
-tradicional é instrumentar cada vaga individualmente com um sensor (ultrassônico, magnético ou
-indutivo). Essa abordagem funciona, mas o custo e a manutenção crescem linearmente com o número
-de vagas, e a instalação exige intervenção física no piso.
+Estacionamentos de grande porte precisam saber, a qualquer momento, **quais vagas estão livres**.
+A alternativa tradicional é instrumentar cada vaga com um sensor. Isso é viável em estacionamentos
+cobertos e estruturados, como os de shopping centers, onde há teto para fixar sensores, energia
+disponível e ambiente protegido.
 
-Uma única câmera fixa, posicionada num ponto elevado, já cobre dezenas ou centenas de vagas
-simultaneamente. O custo por vaga passa a ser marginal. O problema deixa de ser de instrumentação
-e passa a ser de **interpretação da imagem**.
+Em **estacionamentos abertos** a situação é outra: a instalação exige intervenção no piso, os
+sensores ficam expostos a chuva, sol e passagem de veículos, e o custo de implantação e manutenção
+cresce proporcionalmente ao número de vagas.
+
+Uma única câmera fixa em ponto elevado cobre dezenas ou centenas de vagas simultaneamente, e muitas
+vezes já existe no local por razões de segurança. O custo por vaga passa a ser marginal — mas o
+problema deixa de ser de instrumentação e passa a ser de **interpretação da imagem**.
 
 ### 1.2 Por que isso é um problema de Processamento Digital de Imagens
 
-A informação desejada — "esta vaga está ocupada ou livre" — não está explicitamente presente na
-imagem. Ela precisa ser inferida a partir da aparência de uma região do frame. E essa aparência
-varia enormemente por razões que **nada têm a ver com a ocupação da vaga**:
+O estado de uma vaga não está escrito na imagem. Ele precisa ser deduzido da aparência daquela
+região do frame.
 
-| Fator de variação | Efeito observado nas imagens |
-|---|---|
-| Hora do dia e posição do sol | Sombras longas que atravessam vagas vazias e as escurecem como se houvesse um veículo |
-| Condição do céu | Sol direto satura o asfalto claro; dia nublado achata o contraste global |
-| Chuva | Asfalto molhado fica espelhado e escuro; gotas na lente borram regiões inteiras |
-| Perspectiva | Vagas próximas à câmera aparecem grandes e quase frontais; vagas distantes são pequenas e fortemente obliquadas |
-| Oclusão | Árvores, postes e veículos altos em fileiras da frente cobrem parcialmente vagas ao fundo |
-| Cor do veículo | Um carro branco sobre asfalto claro tem contraste quase nulo com a vaga vazia |
+A abordagem é medir alguma propriedade dos pixels da vaga e decidir a partir dela: uma vaga vazia é
+asfalto liso e uniforme, enquanto uma vaga ocupada contém um veículo, que introduz bordas e
+descontinuidades. A dificuldade é que essa mesma aparência varia por razões que **nada têm a ver
+com a ocupação**:
+
+| Fator de variação            | Efeito observado nas imagens                                                                                    |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Hora do dia e posição do sol | Sombras longas que atravessam vagas vazias e as escurecem como se houvesse um veículo                           |
+| Condição do céu              | Sol direto satura o asfalto claro; dia nublado achata o contraste global                                        |
+| Chuva                        | Asfalto molhado fica espelhado e escuro; gotas na lente borram regiões inteiras                                 |
+| Perspectiva                  | Vagas próximas à câmera aparecem grandes e quase frontais; vagas distantes são pequenas e fortemente obliquadas |
+| Oclusão                      | Árvores, postes e veículos altos em fileiras da frente cobrem parcialmente vagas ao fundo                       |
+| Cor do veículo               | Um carro branco sobre asfalto claro tem contraste quase nulo com a vaga vazia                                   |
 
 Ou seja, o sinal que queremos (presença de veículo) está misturado com ruído fotométrico e
 geométrico de magnitude comparável. **Separar esses dois componentes é exatamente o que o
 processamento de imagens faz.** O problema não é resolvido por uma regra de brilho ou por uma
 subtração de fundo ingênua, e é por isso que ele sustenta uma investigação de um semestre.
 
-### 1.3 Delimitação — o que está dentro e fora do escopo
+### 1.3 Como o problema é abordado
 
-**Dentro do escopo:**
+A câmera é fixa e as posições das vagas são conhecidas de antemão, fornecidas como polígonos de
+quatro pontos. Descobrir automaticamente onde ficam as vagas não faz parte do problema: num sistema
+real, isso é feito uma vez na instalação.
 
-- Câmera **fixa**, com geometria conhecida e estável ao longo do tempo.
-- As posições das vagas são **conhecidas a priori** (fornecidas como polígonos anotados). Não é
-  objetivo deste projeto descobrir automaticamente onde ficam as vagas.
-- Classificação **binária** por vaga: ocupada ou livre.
-- Condições diurnas (o conjunto de dados adotado não cobre período noturno).
+Para cada vaga, o processamento recorta a região, calcula uma medida sobre os pixels e decide entre
+ocupada e livre comparando essa medida com um limiar. Não há treinamento nem modelo — a decisão é
+uma regra explícita, e toda a capacidade de discriminação vem da medida escolhida. Isso mantém o
+processamento de imagem como objeto de estudo, em vez de deixá-lo compensado por um classificador.
 
-**Fora do escopo:**
+Métodos aprendidos são permitidos pelo enunciado e ficam registrados como abordagem alternativa
+para comparação futura (seção 4.2), não como linha principal.
 
-- Identificação do veículo, leitura de placa, ou rastreamento entre frames.
-- Detecção de manobras, tempo de permanência ou cobrança.
-- Descoberta automática do layout de vagas.
-- Vídeo em tempo real — o projeto trabalha sobre frames independentes.
+O arquivo de anotação traz duas informações de estatuto distinto: os **polígonos**, que são entrada
+legítima, e o rótulo **`occupied`**, que é verdade de referência e nunca entra na decisão — ele é
+consultado apenas depois, para verificar se o resultado estava correto.
+
+A avaliação cobre somente as vagas anotadas de cada câmera, que são um subconjunto do pátio. O
+objetivo é reproduzir, a partir dos pixels, o mesmo resultado que a anotação garante para essas
+vagas.
 
 ### 1.4 A pergunta técnica central
 
-Uma solução que funciona apenas no estacionamento e no clima em que foi calibrada tem pouco valor
-prático: significa recalibrar a cada nova instalação. O trabalho original que originou o conjunto
-de dados adotado (Almeida et al., 2015) já reportava que o desempenho **cai quando o classificador
-treinado em um estacionamento é aplicado a outro**.
+A medida calculada sobre os pixels muda quando o clima muda e quando o estacionamento muda — mesmo
+que a vaga esteja no mesmo estado. Um limiar calibrado num estacionamento ensolarado pode não valer
+em outro estacionamento, ou no mesmo sob chuva.
 
-Este projeto assume essa limitação como objeto de estudo:
+Isso tem consequência prática direta: se a regra precisa ser recalibrada a cada câmera e a cada
+condição, a solução não escala. O artigo original do conjunto de dados (Almeida et al., 2015) já
+reportava essa queda ao trocar de estacionamento.
 
-> **Quanto da queda de desempenho entre condições climáticas distintas e entre estacionamentos
-> distintos pode ser recuperada por pré-processamento fotométrico e por escolha de descritores de
-> textura, em vez de simplesmente ampliar o conjunto de treino?**
+A pergunta do projeto é:
 
-Essa formulação é deliberada: ela mantém o classificador como componente fixo e coloca as
-**etapas de processamento de imagem como a variável experimental**. É o que torna o projeto um
-trabalho de PDI, e não um exercício de aprendizado de máquina em que a imagem é apenas um vetor
-de entrada.
+> **É possível processar a imagem de modo que a medida deixe de depender do clima e do
+> estacionamento — permitindo que a mesma regra funcione em condições onde não foi calibrada?**
+
+A variável experimental é o **processamento aplicado antes da medida**. A regra de decisão
+permanece fixa. É isso que torna o trabalho um estudo de PDI.
 
 ---
 
@@ -85,17 +97,13 @@ câmeras de segurança instaladas em pontos elevados. A proposta é reaproveitar
 para produzir uma contagem de vagas livres, exibida em painel na entrada ou disponibilizada via
 API.
 
-O que torna o contexto concreto o suficiente para avaliar resultados:
+Dois aspectos do contexto orientam a avaliação:
 
-- Existe um número de referência verificável (a contagem real de vagas livres).
-- O custo de erro é assimétrico e interpretável: indicar como livre uma vaga ocupada faz o
-  motorista se deslocar em vão; o inverso apenas subutiliza o estacionamento. Isso justifica
-  analisar falsos positivos e falsos negativos separadamente, e não apenas a acurácia agregada.
-- O requisito de generalização é real: quem instala o sistema num estacionamento quer instalar no
-  seguinte sem recomeçar a anotação.
-
-O projeto **não pretende** entregar um produto comercial. Pretende produzir evidência mensurável
-sobre quais técnicas de processamento tornam essa leitura confiável sob variação de condições.
+- O custo de erro é assimétrico. Indicar como livre uma vaga ocupada faz o motorista se deslocar em
+  vão; o inverso apenas subutiliza o pátio. Por isso falsos positivos e falsos negativos são
+  reportados separadamente, e não só a acurácia agregada.
+- Quem instala o sistema num estacionamento quer instalar no seguinte sem recalibrar. É o que torna
+  a pergunta da seção 1.4 relevante na prática, e não apenas academicamente.
 
 ---
 
@@ -110,16 +118,27 @@ mudanças de clima e de estacionamento.
 
 ### 3.2 Objetivos específicos
 
-1. Construir um extrator que, dado um frame e a anotação de vagas, produza recortes normalizados
-   por vaga com correção de perspectiva.
-2. Caracterizar quantitativamente a variabilidade fotométrica do conjunto de dados (distribuições
-   de intensidade por clima, por estacionamento e por classe).
-3. Implementar e comparar ao menos três estratégias de normalização fotométrica.
-4. Implementar e comparar ao menos dois descritores de textura.
-5. Estabelecer um protocolo de avaliação com separação explícita entre os cenários
-   intra-estacionamento e inter-estacionamento.
-6. Medir e interpretar a degradação de desempenho em cada cenário, isolando a contribuição de cada
-   etapa do pipeline por meio de ablação.
+1. Extrair, de um frame e da anotação, recortes de vaga normalizados em tamanho e orientação.
+   _(realizado na M1)_
+2. Verificar se existe medida sobre os pixels que separe vaga ocupada de vaga livre, e quantificar
+   essa separação. _(realizado na M1)_
+3. Medir quanto o desempenho cai ao aplicar a mesma regra em outro estacionamento e sob outro
+   clima. _(realizado na M1)_
+4. Implementar e comparar estratégias de normalização fotométrica, verificando se reduzem a queda
+   medida no objetivo 3.
+5. Comparar medidas alternativas sobre os pixels (densidade de bordas, variância local, energia de
+   textura), identificando qual se mantém mais estável entre condições.
+6. Analisar os erros por posição e área da vaga, para identificar se as falhas se concentram em
+   vagas distantes ou parcialmente ocluídas.
+
+Os objetivos 4 a 6 são o trabalho previsto para a M2 e a M3.
+
+**Dois cenários de avaliação** aparecem ao longo do documento e convém defini-los aqui:
+
+- **Mesmo estacionamento** — o limiar é calibrado e aplicado no mesmo lote, em dias diferentes.
+  É o cenário fácil, que estabelece o melhor desempenho possível da medida.
+- **Estacionamento diferente** — o limiar é calibrado num lote e aplicado, sem alteração, a outro.
+  É o cenário que interessa: mede se a solução funciona onde não foi ajustada.
 
 ### 3.3 Entrada e saída
 
@@ -153,13 +172,13 @@ Os critérios abaixo são a base contra a qual o resultado final será julgado. 
 são metas iniciais e poderão ser revistos na M2 à luz dos primeiros resultados — mas a **forma** dos
 critérios não deve mudar.
 
-| # | Critério | Como será verificado |
-|---|---|---|
-| C1 | Acurácia por vaga ≥ 90% no cenário intra-estacionamento (treino e teste no mesmo lote, dias disjuntos) | Acurácia sobre o conjunto de teste, reportada por clima |
-| C2 | A queda de acurácia no cenário inter-estacionamento é **menor** com normalização fotométrica do que sem ela | Comparação direta entre as duas configurações, mesma partição |
-| C3 | Desempenho reportado **sempre desagregado** por clima (Sunny / Cloudy / Rainy), nunca apenas em média | Tabela de resultados por condição |
-| C4 | Falsos positivos e falsos negativos reportados separadamente | Matriz de confusão por cenário |
-| C5 | Todo resultado numérico apresentado é reproduzível a partir do repositório | Script executável por linha de comando, com semente fixa e parâmetros explícitos |
+| #   | Critério                                                                                                    | Como será verificado                                                             |
+| --- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| C1  | Acurácia por vaga ≥ 90% no mesmo estacionamento, em dias diferentes dos usados na calibração                | Acurácia sobre o conjunto de teste, reportada por clima                          |
+| C2  | A queda de acurácia em estacionamento diferente é **menor** com normalização fotométrica do que sem ela     | Comparação direta entre as duas configurações, mesma amostra                     |
+| C3  | Desempenho reportado **sempre desagregado** por clima (Sunny / Cloudy / Rainy), nunca apenas em média       | Tabela de resultados por condição                                                |
+| C4  | Falsos positivos e falsos negativos reportados separadamente                                                | Matriz de confusão por cenário                                                   |
+| C5  | Todo resultado numérico apresentado é reproduzível a partir do repositório                                  | Script executável por linha de comando, com semente fixa e parâmetros explícitos |
 
 O critério C2 é o coração do projeto: ele pode ser refutado pelos dados. Se a normalização
 fotométrica **não** recuperar desempenho, esse é um resultado legítimo e será reportado como tal,
@@ -178,89 +197,89 @@ flowchart TD
     D --> D2["Equalizacao adaptativa local"]
     D --> D3["Correcao de sombra /<br/>normalizacao de iluminacao"]
     D --> D4["Espaco de cor alternativo<br/>(HSV / Lab)"]
-    D1 --> E{"Descritor<br/>VARIAVEL EXPERIMENTAL"}
+    D1 --> E{"Medida sobre os pixels<br/>VARIAVEL EXPERIMENTAL"}
     D2 --> E
     D3 --> E
     D4 --> E
-    E --> E1["LBP - padroes binarios locais"]
-    E --> E2["Histograma de gradientes"]
-    E1 --> F["Classificador SVM<br/>(componente FIXO)"]
+    E --> E1["Densidade de bordas (Sobel)"]
+    E --> E2["Variancia / energia de textura"]
+    E1 --> F["Comparacao com limiar calibrado<br/>(regra explicita, sem treinamento)"]
     E2 --> F
-    F --> G["Rotulo por vaga + confianca"]
+    F --> G["Rotulo por vaga"]
     G --> H["Agregacao -> contagem de vagas livres"]
 ```
 
 ### 4.1 Finalidade de cada etapa
 
 **Recorte e correção de perspectiva.**
-*Recebe:* frame completo e um polígono de quatro pontos.
-*Produz:* uma imagem de tamanho canônico fixo (previsto: 48×64 px) contendo apenas a vaga.
-*Finalidade:* eliminar a variação geométrica. Sem esta etapa, uma vaga distante e outra próxima
+_Recebe:_ frame completo e um polígono de quatro pontos.
+_Produz:_ uma imagem de tamanho canônico fixo (48×64 px) contendo apenas a vaga.
+_Finalidade:_ eliminar a variação geométrica. Sem esta etapa, uma vaga distante e outra próxima
 produzem representações incomparáveis, e o classificador aprenderia a posição na imagem em vez da
 presença do veículo. A transformação prevista é uma homografia estimada a partir dos quatro
 vértices do polígono.
-*Dúvida em aberto:* qual o tamanho canônico adequado. Muito pequeno destrói a textura que os
-descritores exploram; muito grande amplia artificialmente vagas distantes, que têm pouca
-informação real.
+_Dúvida em aberto:_ qual o tamanho canônico adequado? Muito pequeno destrói a textura que os
+descritores exploram; muito grande amplia artificialmente vagas distantes.
 
 **Normalização fotométrica.**
-*Recebe:* patch canônico em cor.
-*Produz:* patch com variação de iluminação atenuada.
-*Finalidade:* esta é a etapa sob investigação. A hipótese do projeto é que a queda de desempenho
+_Recebe:_ patch canônico em cor.
+_Produz:_ patch com variação de iluminação atenuada.
+_Finalidade:_ esta é a etapa sob investigação. A hipótese do projeto é que a queda de desempenho
 entre climas e entre estacionamentos é majoritariamente de origem fotométrica, e portanto
 atacável aqui. As alternativas listadas no diagrama serão implementadas e comparadas, não
 escolhidas a priori.
-*Dúvida em aberto:* se a informação de cor ajuda ou atrapalha. Cor distingue veículo de asfalto em
-dia claro, mas é justamente o canal mais afetado por chuva e sombra.
+_Dúvida em aberto:_ se a informação de cor ajuda ou atrapalha. Cor deixa mais evidente do veículo de asfalto em
+dia claro, mas é justamente o canal mais afetado por chuva e sombras.
 
-**Descritor de textura.**
-*Recebe:* patch normalizado.
-*Produz:* vetor de características de dimensão fixa.
-*Finalidade:* representar a região por propriedades locais de textura e borda em vez de por
-intensidade bruta. Um veículo introduz bordas, reflexos e descontinuidades que o asfalto vazio não
-tem — mesmo quando o brilho médio das duas regiões é semelhante. É o que deve tornar o carro
-branco sobre asfalto claro separável.
-*Dúvida em aberto:* se descritores clássicos bastam ou se será necessário recorrer a
-representações aprendidas na M3.
+**Medida sobre os pixels.**
+_Recebe:_ patch normalizado.
+_Produz:_ um número.
+_Finalidade:_ representar a região por uma propriedade **estrutural** em vez de pela intensidade
+bruta. Este é o ponto central do projeto. Quando o clima muda, o valor absoluto dos pixels muda
+muito: o mesmo asfalto pode marcar 180 ao sol e 60 na chuva. Mas a descontinuidade entre o
+para-brisa e o capô de um veículo continua existindo nas três condições. O que se mantém não é o
+valor do pixel, e sim a relação entre pixels vizinhos.
+_Medida inicial:_ densidade de bordas — fração de pixels do recorte cuja magnitude de gradiente
+(Sobel) excede um limiar. Asfalto vazio é liso e pontua baixo; um veículo acrescenta bordas de
+para-brisa, teto e carroceria e pontua alto.
+_Dúvida em aberto:_ se uma única medida escalar basta, ou se é necessário combinar duas.
 
-**Classificador.**
-*Recebe:* vetor de características.
-*Produz:* rótulo e escore.
-*Finalidade:* deliberadamente mantido **fixo e simples** (SVM) durante todo o projeto. Se o
-classificador variasse junto com o pré-processamento, seria impossível atribuir as diferenças de
-desempenho às etapas de imagem — e o projeto perderia seu objeto de estudo.
+**Decisão por limiar.**
+_Recebe:_ a medida.
+_Produz:_ rótulo.
+_Finalidade:_ regra explícita, `medida > limiar`, com o limiar calibrado sobre um conjunto de
+referência. Não há treinamento nem modelo. Toda a capacidade de discriminação vem da medida
+escolhida sobre os pixels, o que torna as diferenças de desempenho atribuíveis diretamente ao
+processamento de imagem — e não a um classificador que poderia estar compensando um
+pré-processamento ruim.
 
 **Agregação.**
-*Recebe:* rótulos individuais das vagas de um frame.
-*Produz:* contagem de vagas livres.
-*Finalidade:* produzir a saída que o contexto de aplicação de fato consome, e permitir avaliar o
+_Recebe:_ rótulos individuais das vagas de um frame.
+_Produz:_ contagem de vagas livres.
+_Finalidade:_ produzir a saída que o contexto de aplicação de fato consome, e permitir avaliar o
 erro na métrica que importa ao usuário final (erro na contagem), além da acurácia por vaga.
 
-### 4.2 Alternativas reconhecidas
-
-O pipeline acima não é a única abordagem possível. Duas alternativas foram consideradas e estão
-registradas aqui porque poderão ser retomadas na M2 ou M3:
+### 4.2 Alternativas consideradas
 
 ```mermaid
 flowchart TD
-    A["Patch de vaga"] --> B1["Descritor manual + SVM<br/>(linha principal)"]
-    A --> B2["Subtracao de fundo /<br/>modelo do asfalto vazio"]
-    A --> B3["CNN pequena treinada<br/>do zero"]
-    B1 --> C["Comparacao sob<br/>o mesmo protocolo"]
+    A["Patch de vaga"] --> B1["Medida + limiar<br/>(linha principal)"]
+    A --> B2["Subtracao de fundo"]
+    A --> B3["Classificador treinado"]
+    B1 --> C["Comparacao sob<br/>a mesma avaliacao"]
     B2 --> C
     B3 --> C
 ```
 
-- **Subtração de fundo.** Como a câmera é fixa, seria possível modelar a aparência da vaga vazia e
-  detectar desvios. Atraente pela simplicidade, mas frágil justamente sob os fatores que este
-  projeto quer estudar: sombras móveis e asfalto molhado produzem desvios grandes sem qualquer
-  veículo presente. Registrada como baseline de comparação, não como linha principal.
-- **Representação aprendida (CNN).** Provavelmente superior em acurácia bruta, mas transferiria o
-  objeto de estudo do processamento de imagens para a arquitetura da rede. Prevista para a M3 como
-  **ponto de comparação** contra a linha clássica, permitindo discutir o custo-benefício entre as
-  duas famílias.
+**Subtração de fundo.** Como a câmera é fixa, dava para guardar uma imagem da vaga vazia e comparar
+cada frame com ela. É simples, mas quebra exatamente nas condições que o projeto quer estudar:
+sombra passando ou asfalto molhado produzem diferença grande sem carro nenhum. Fica como
+comparação, não como linha principal.
 
-Na M1, reconhecer essas alternativas é mais relevante do que decidir prematuramente por uma.
+**Classificador treinado.** Um SVM ou uma rede provavelmente acertaria mais. O problema é que a
+decisão passaria a ser aprendida, e não daria mais para saber se um bom resultado veio do
+processamento ou do classificador compensando um processamento ruim. Fica como comparação opcional
+na M3, para discutir o custo-benefício entre as duas abordagens.
 
 ---
 
@@ -332,47 +351,85 @@ disponibilidade.
 - **Baseline publicado existente.** O artigo original reporta resultados com descritores de textura
   e SVM, oferecendo referência metodológica e ponto de comparação.
 
-### 7.2 Experimentos previstos para fechar a M1
+### 7.2 Experimentos realizados
 
-| # | Experimento | Evidência que produz |
-|---|---|---|
-| E1 | Parser de anotação + extração de recortes com correção de perspectiva | Demonstra que a etapa geométrica é executável; produz painel visual de recortes por clima |
-| E2 | Caracterização fotométrica: histogramas de intensidade por clima e por classe | Quantifica a sobreposição entre classes e sustenta a hipótese central do projeto |
-| E3 | Baseline mensurável: descritor de textura + SVM, treino e teste no mesmo estacionamento | Estabelece o limite superior de referência (cenário fácil) |
-| E4 | Mesmo classificador de E3 aplicado a um estacionamento diferente | **Quantifica o problema**: a diferença entre E3 e E4 é a justificativa numérica do projeto |
+**E1 — extração de recortes com correção de perspectiva.**
 
-A diferença entre E3 e E4 é o resultado mais importante da M1. Ela transforma a afirmação
-"generalizar entre estacionamentos é difícil" em um número medido pelo próprio grupo.
+Demonstrou que a etapa geométrica é executável sobre os dados reais e produziu a comparação visual
+dos recortes por clima e classe (`images/results/grid_UFPR04.png`).
 
-### 7.3 Riscos identificados
+Resultado quantitativo relevante: num mesmo frame do UFPR04, a maior vaga ocupa **12.654 px** e a
+menor **1.153 px** — razão de **11×**. Vagas fisicamente idênticas, diferindo apenas pela distância
+à câmera. Isso justifica empiricamente a etapa de normalização geométrica que a seção 4 previa.
 
-| Risco | Mitigação prevista |
-|---|---|
-| Extração local do conjunto aparentemente incompleta (ver `dados.md`) | Reextrair e reconferir; o subconjunto atual já é suficiente para a M1 |
-| Volume de recortes elevado torna a experimentação lenta | Amostragem estratificada por dia, clima e classe; caching dos vetores de características |
-| Desbalanceamento entre classes varia por clima e lote | Reportar métricas balanceadas além da acurácia; considerar reamostragem |
-| Vagas fortemente ocluídas podem ser irrecuperáveis | Analisar erros por posição na imagem; se confirmado, documentar como limitação, não mascarar |
-| Sem equipe definida, o escopo pode ficar grande demais | Escopo dimensionado para uma pessoa; extensões marcadas explicitamente como opcionais |
+**E2 — separabilidade por densidade de bordas.**
+
+Responde à pergunta que determina a viabilidade do projeto: _existe alguma medida calculável sobre
+os pixels que separe vaga ocupada de vaga livre?_
+
+Procedimento: para cada vaga amostrada, calcular a densidade de bordas (Sobel) e a intensidade
+média a partir **exclusivamente dos pixels do recorte**. Só depois consultar o rótulo, para agrupar
+as medidas e pontuar. Um limiar foi calibrado no UFPR04 e aplicado **sem alteração** aos demais
+estacionamentos. Amostra: 2.920 vagas nos três lotes.
+
+| Medida              | UFPR04 (calibração) | UFPR05 | PUCPR |
+| ------------------- | ------------------: | -----: | ----: |
+| Densidade de bordas |           **94,0%** |  66,0% | 85,1% |
+| Intensidade média   |               64,7% |  32,9% | 57,3% |
+
+Desagregado por clima, com o limiar da densidade de bordas:
+
+|        | Sunny | Cloudy | Rainy |
+| ------ | ----: | -----: | ----: |
+| UFPR04 | 94,6% |  93,5% | 94,0% |
+| UFPR05 | 70,0% |  76,2% | 51,7% |
+| PUCPR  | 76,4% |  90,7% | 86,7% |
+
+Três conclusões:
+
+1. **O problema é solúvel por PDI.** Uma única operação de gradiente e um limiar atingem 94,0% sem
+   qualquer treinamento. Os histogramas em `images/results/e2_edge_density_*.png` mostram as duas
+   classes ocupando faixas distintas da medida, com sobreposição limitada.
+2. **A hipótese central se confirma.** A intensidade média fica em 64,7% no próprio lote de
+   calibração e cai a 32,9% em outro — abaixo do acaso numa tarefa binária. Brilho não separa as
+   classes de forma estável; estrutura separa. É a evidência de que a informação útil está na
+   relação entre pixels vizinhos, e não no seu valor absoluto.
+3. **O problema do projeto existe e foi medido.** O mesmo limiar cai de 94,0% para 66,0% ao mudar de
+   estacionamento — **28 pontos**. Essa queda é a justificativa numérica do projeto, obtida pelo
+   próprio grupo em vez de citada da literatura.
+
+Dois padrões nos erros orientam a M2:
+
+- No UFPR05 foram **241 falsos negativos contra 3 falsos positivos**. O limiar do UFPR04 está alto
+  demais para aquele lote, e vagas ocupadas passam por livres. A diferença entre lotes é, portanto,
+  majoritariamente de **escala** da medida — exatamente o efeito que a normalização fotométrica
+  prevista na seção 4 deve atacar.
+- O pior caso isolado é UFPR05 sob chuva, com **51,7%** — o equivalente ao acaso. É a condição em
+  que a medida falha por completo, e o alvo mais claro para a M2.
+
+### 7.3 Experimentos previstos para a M2
+
+| #   | Experimento                                                              | Evidência que produz                                       |
+| --- | ------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| E3  | Normalizações fotométricas aplicadas antes da medida                     | Verifica se a queda de 28 pontos é recuperável             |
+| E4  | Comparação de medidas alternativas (variância local, energia de textura) | Identifica se outra medida generaliza melhor               |
+| E5  | Análise de erros por posição e por área da vaga                          | Testa se as vagas distantes e ocluídas concentram os erros |
+
+### 7.4 Riscos identificados
+
+| Risco                                                                | Mitigação prevista                                                                           |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Volume de recortes elevado torna a experimentação lenta              | Amostragem estratificada por dia, clima e classe; caching das medidas                        |
+| Desbalanceamento entre classes varia por clima e lote                | Reportar métricas balanceadas além da acurácia; considerar reamostragem                      |
+| Vagas fortemente ocluídas podem ser irrecuperáveis                   | Analisar erros por posição na imagem; se confirmado, documentar como limitação, não mascarar |
+| Sem equipe definida, o escopo pode ficar grande demais               | Escopo dimensionado para uma pessoa; extensões marcadas explicitamente como opcionais        |
 
 ---
 
-## 8. Evolução prevista
-
-A M2 e a M3 ainda não foram detalhadas pelo professor. O planejamento abaixo é uma hipótese de
-trabalho do grupo e será ajustado quando os enunciados forem publicados.
-
-| Etapa | Foco | Entrega prevista |
-|---|---|---|
-| **M1** | Definição, dados, viabilidade | Problema delimitado, conjunto caracterizado, pipeline projetado, E1–E4 executados |
-| **M2** | Pipeline completo e ablação | Normalizações e descritores implementados; tabela de ablação sob protocolo fixo; análise de erros |
-| **M3** | Consolidação e comparação | Melhor configuração consolidada, comparação com abordagem alternativa, CLI reprodutível, análise final |
-
----
-
-## 9. Referências
+## 8. Referências
 
 1. ALMEIDA, P. R. L.; OLIVEIRA, L. S.; BRITTO JR., A. S.; SILVA JR., E. J.; KOERICH, A. L.
-   **PKLot — A robust dataset for parking lot classification.** *Expert Systems with Applications*,
+   **PKLot — A robust dataset for parking lot classification.** _Expert Systems with Applications_,
    v. 42, n. 11, p. 4937–4949, 2015.
    Disponível em: <https://www.inf.ufpr.br/lesoliveira/download/ESWA2015.pdf>
 
@@ -387,10 +444,4 @@ trabalho do grupo e será ajustado quando os enunciados forem publicados.
 
 ---
 
-## 10. Registro de decisões
-
-| Data | Decisão | Justificativa |
-|---|---|---|
-| 2026-08-29 | Adoção do PKLot em vez de conjunto de recibos digitalizados | Os recibos disponíveis já vinham digitalizados, recortados e alinhados, o que removia a motivação para as etapas de processamento geométrico e fotométrico. O PKLot apresenta variação real e traz verdade de referência embutida. |
-| 2026-08-29 | Classificador mantido fixo ao longo do projeto | Permite atribuir variações de desempenho às etapas de processamento de imagem, preservando o objeto de estudo. |
-| 2026-08-29 | Posição das vagas tratada como conhecida a priori | A descoberta automática do layout é um problema distinto e ampliaria demais o escopo para um projeto de um semestre. |
+      |

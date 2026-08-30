@@ -13,7 +13,7 @@ Etapa atual: **M1 — definição do problema e estudo de viabilidade**
 | ---------------- | -------------------------------------------------------------------------------- |
 | Leonardo Pacheco | Definição do problema, obtenção e caracterização dos dados, documentação técnica |
 
-> Composição da equipe ainda em definição. O escopo está dimensionado para uma pessoa.
+> Composição da equipe ainda em definição. Aguardando email pois está dimensionado para uma pessoa.
 
 ---
 
@@ -85,8 +85,8 @@ frame 1280x720  +  anotacao das vagas
 | --------------------- | --------------------------------------------------------- |
 | Estacionamentos       | 3 (PUCPR, UFPR04, UFPR05)                                 |
 | Condições             | Sunny, Cloudy, Rainy                                      |
-| Frames (cópia local)  | 2.541, em 143 dias distintos                              |
-| Recortes de vaga      | 142.757 (48,7% ocupadas)                                  |
+| Frames                | 12.417                                                    |
+| Recortes de vaga      | 695.851 (48,5% ocupadas)                                  |
 | Resolução             | 1280 × 720 px, JPEG                                       |
 | Verdade de referência | XML por frame, com polígono e rótulo de ocupação por vaga |
 
@@ -110,17 +110,20 @@ Concluído: problema definido e delimitado · conjunto obtido, inspecionado e ca
 da anotação validado · pipeline preliminar projetado com alternativas registradas · critérios de
 sucesso e protocolo de avaliação definidos.
 
-Em andamento:
+Experimentos realizados:
 
-|     | Experimento                                                           | Produz                                               |
-| --- | --------------------------------------------------------------------- | ---------------------------------------------------- |
-| E1  | Parser de anotação + extração de recortes com correção de perspectiva | Painel visual de vagas por clima                     |
-| E2  | Caracterização fotométrica por clima e por classe                     | Histogramas; quantifica a sobreposição entre classes |
-| E3  | Baseline: descritor de textura + SVM, mesmo estacionamento            | Limite superior de referência                        |
-| E4  | Mesmo classificador aplicado a outro estacionamento                   | **Quantifica o problema**                            |
+| | Experimento | Resultado |
+|---|---|---|
+| E1 | Extração de recortes com correção de perspectiva | Vagas variam **11×** em área no mesmo frame, justificando a normalização geométrica |
+| E2 | Separabilidade por densidade de bordas | **94,0%** de acerto com Sobel + limiar, sem treinamento |
 
-A diferença entre E3 e E4 é o resultado mais importante da M1: transforma a afirmação "generalizar
-entre estacionamentos é difícil" em um número medido.
+O E2 responde a pergunta que determina a viabilidade do projeto — *existe medida sobre os pixels que
+separe vaga ocupada de livre?* Com o limiar calibrado no UFPR04 e aplicado sem alteração aos demais:
+**94,0%** no próprio lote, **66,0%** no UFPR05, **85,1%** no PUCPR. A intensidade média, usada como
+comparação, fica em 64,7% e cai a 32,9%.
+
+Análise dos resultados, tabelas por clima e padrão dos erros em
+[`docs/proposta.md`](docs/proposta.md), seção 7.2.
 
 Pendente: vídeo de apresentação.
 
@@ -135,7 +138,7 @@ pdi_parking_lot/
 ├── docs/
 │   ├── proposta.md         proposta tecnica completa
 │   └── dados.md            caracterizacao do conjunto de imagens
-├── src/pdi_vagas/          modulos do pipeline
+├── src/parking/            modulos do pipeline
 ├── scripts/                experimentos E1-E4, executaveis por linha de comando
 ├── tests/                  testes das operacoes de src/
 ├── images/results/         figuras versionadas (paineis, histogramas)
@@ -144,10 +147,6 @@ pdi_parking_lot/
 ├── requirements.txt
 └── .gitignore
 ```
-
-**Não há notebooks no projeto.** Todo experimento é um script executável por linha de comando, com
-parâmetros explícitos e saída gravada em `results/` ou `images/results/`, conforme o §13 do
-enunciado.
 
 ---
 
@@ -162,34 +161,81 @@ As escolhas não estão fechadas e poderão ser revistas conforme a investigaç�
 
 ## Reprodução
 
+Preparação do ambiente:
+
 ```bash
 python -m venv .venv
-source .venv/bin/activate     # Windows: .venv\Scripts\activate
+```
+
+Ativação — **necessária em todo terminal novo**, senão o `python` usado será o do sistema e as
+dependências não serão encontradas:
+
+```bash
+source .venv/Scripts/activate
+```
+
+Em Linux e macOS o caminho é `source .venv/bin/activate`. Com o ambiente ativo, o prompt mostra
+`(.venv)`.
+
+```bash
 python -m pip install -r requirements.txt
 ```
 
 Obtenção dos dados: **[`docs/dados.md`](docs/dados.md)**, seção 6.
 
-Os experimentos E1–E4 estão em desenvolvimento. Cada um será um script em `scripts/`, no formato:
+### Testes
 
 ```bash
-python -m scripts.<experimento> --data data/PKLot --output results/
+python -m pytest tests/ -q
 ```
 
-Os comandos exatos, com parâmetros e saídas, serão documentados aqui conforme forem concluídos.
+### E1 — extração de recortes com correção de perspectiva
+
+```bash
+python -m scripts.e1_extract_patches --data ../PKLot/PKLot --lot UFPR04
+```
+
+Ajuste `--data` para onde o conjunto foi extraído. Parâmetros disponíveis:
+
+| Parâmetro              | Padrão      | Descrição                                      |
+| ---------------------- | ----------- | ---------------------------------------------- |
+| `--data`               | obrigatório | diretório `PKLot/` com os três estacionamentos |
+| `--lot`                | `UFPR04`    | `PUCPR`, `UFPR04` ou `UFPR05`                  |
+| `--weather`            | `all`       | `Sunny`, `Cloudy`, `Rainy` ou `all`            |
+| `--frames-per-weather` | `2`         | frames processados por condição climática      |
+| `--samples-per-cell`   | `8`         | recortes por célula da grade                   |
+| `--patch-size`         | `48x64`     | tamanho canônico do recorte                    |
+| `--seed`               | `42`        | semente da amostragem                          |
+
+Saídas: `images/results/overlay_*.png` (frame com as vagas anotadas),
+`images/results/grid_<lote>.png` (grade de recortes por clima e classe) e
+`results/e1_inventory.csv` (uma linha por vaga extraída).
+
+### E2 — separabilidade por densidade de bordas
+
+```bash
+python -m scripts.e2_edge_density --data ../PKLot/PKLot
+```
+
+Mede densidade de bordas (Sobel) e intensidade média de cada vaga **usando apenas os pixels**,
+calibra um limiar em um estacionamento e o aplica sem alteração aos demais. Os rótulos de ocupação
+são lidos só depois, para pontuar.
+
+| Parâmetro | Padrão | Descrição |
+|---|---|---|
+| `--data` | obrigatório | diretório `PKLot/` |
+| `--calibrate-on` | `UFPR04` | estacionamento onde o limiar é calibrado |
+| `--frames-per-weather` | `6` | frames amostrados por condição climática |
+| `--patch-size` | `48x64` | tamanho canônico do recorte |
+
+Saídas: `images/results/e2_edge_density_<lote>.png` (histogramas por clima, com o limiar marcado) e
+`results/e2_measurements.csv` (uma linha por vaga, com as duas medidas e o rótulo).
 
 ---
 
 ## Vídeo da M1
 
 > _A ser publicado no YouTube como não listado, com o link inserido aqui antes da entrega._
-
----
-
-## Uso de IA generativa
-
-Houve uso de IA generativa neste projeto, declarado conforme o §16 do enunciado.
-→ **[`AI_USAGE.md`](AI_USAGE.md)**
 
 ---
 
