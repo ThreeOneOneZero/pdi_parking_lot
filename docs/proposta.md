@@ -297,7 +297,7 @@ flowchart LR
         B2["extracao<br/>recorte + homografia"]
         B3["preproc<br/>normalizacao fotometrica"]
         B4["descritores<br/>LBP, gradientes"]
-        B5["modelo<br/>treino e predicao"]
+        B5["decisao<br/>calibracao e limiar"]
     end
     subgraph OUT["Saida"]
         C1["avaliacao<br/>metricas, matriz de confusao"]

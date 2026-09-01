@@ -27,13 +27,14 @@ vagas distantes ficarem pequenas e obliquadas, carros brancos sobre asfalto clar
 quase nulo, e árvores ocluem fileiras inteiras. O sinal desejado está misturado com ruído
 fotométrico e geométrico de magnitude comparável.
 
-**Pergunta técnica central:** quanto da queda de desempenho entre condições climáticas e entre
-estacionamentos diferentes pode ser recuperada por pré-processamento fotométrico e escolha de
-descritores de textura, em vez de simplesmente ampliar o conjunto de treino?
+**Pergunta técnica central:** é possível processar a imagem de modo que a medida usada para decidir
+deixe de depender do clima e do estacionamento — permitindo que a mesma regra funcione onde não foi
+calibrada?
 
-O classificador é mantido fixo durante todo o projeto; as etapas de processamento de imagem são a
-variável experimental. É isso que torna o trabalho um estudo de PDI, e não um exercício de
-aprendizado de máquina onde a imagem é apenas um vetor de entrada.
+A decisão é uma regra explícita, `medida > limiar`, sem treinamento nem modelo. As etapas de
+processamento aplicadas antes da medida são a variável experimental. É isso que torna o trabalho um
+estudo de PDI, e não um exercício de aprendizado de máquina onde a imagem é apenas um vetor de
+entrada.
 
 → Delimitação completa em **[`docs/proposta.md`](docs/proposta.md)**, seção 1.
 
@@ -61,14 +62,14 @@ estacionamento.
 frame 1280x720  +  anotacao das vagas
         │
         ├─ recorte por vaga + correcao de perspectiva  ──→  patch canonico
-        ├─ normalizacao fotometrica     ← VARIAVEL EXPERIMENTAL
-        ├─ descritor de textura         ← VARIAVEL EXPERIMENTAL
-        ├─ classificador SVM            ← COMPONENTE FIXO
-        └─→  { vaga: ocupada|livre + confianca }  ──→  contagem de vagas livres
+        ├─ normalizacao fotometrica       ← VARIAVEL EXPERIMENTAL
+        ├─ medida sobre os pixels (Sobel) ← VARIAVEL EXPERIMENTAL
+        ├─ comparacao com limiar          ← REGRA FIXA, sem treinamento
+        └─→  { vaga: ocupada|livre }  ──→  contagem de vagas livres
 ```
 
 **Entra:** frame RGB 1280×720 de câmera fixa + definição das vagas (polígonos de 4 pontos).
-**Sai:** rótulo `ocupada`/`livre` com confiança por vaga, e a contagem agregada de vagas livres.
+**Sai:** rótulo `ocupada`/`livre` por vaga, e a contagem agregada de vagas livres.
 
 → Diagrama detalhado, finalidade de cada etapa, dúvidas em aberto e alternativas consideradas em
 **[`docs/proposta.md`](docs/proposta.md)**, seção 4.
@@ -150,8 +151,7 @@ pdi_parking_lot/
 
 ## Tecnologias
 
-Python 3.11+ · OpenCV e scikit-image (homografia, normalização, descritores) · NumPy ·
-scikit-learn (SVM) · Matplotlib (figuras).
+Python 3.11+ · OpenCV (homografia, Sobel) · NumPy · Matplotlib (figuras) · pytest.
 
 As escolhas não estão fechadas e poderão ser revistas conforme a investigação avançar.
 

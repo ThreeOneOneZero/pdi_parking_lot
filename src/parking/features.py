@@ -1,7 +1,7 @@
 """Measurements computed from patch pixels alone.
 
-Nothing here ever sees an occupancy label. These functions take an image and return
-a number; whether that number separates occupied from free spaces is what the
+These functions take an image and return a number;
+whether that number separates occupied from free spaces is what the
 experiments measure.
 """
 
@@ -27,10 +27,6 @@ def gradient_magnitude(patch: np.ndarray) -> np.ndarray:
 
 def edge_density(patch: np.ndarray, threshold: float = 60.0) -> float:
     """Fraction of pixels whose gradient magnitude exceeds `threshold`.
-
-    Empty asphalt is smooth and scores low. A car adds windscreen, roof and body
-    edges, so it scores high. Unlike raw brightness, an edge survives a change of
-    weather: the discontinuity stays even when both sides get darker.
     """
     return float((gradient_magnitude(patch) > threshold).mean())
 
