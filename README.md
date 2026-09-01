@@ -124,8 +124,6 @@ comparação, fica em 64,7% e cai a 32,9%.
 Análise dos resultados, tabelas por clima e padrão dos erros em
 [`docs/proposta.md`](docs/proposta.md), seção 7.2.
 
-Pendente: vídeo de apresentação.
-
 ---
 
 ## Organização do repositório
@@ -233,7 +231,7 @@ Saídas: `images/results/e2_edge_density_<lote>.png` (histogramas por clima, com
 
 ## Vídeo da M1
 
-> _A ser publicado no YouTube como não listado, com o link inserido aqui antes da entrega._
+> _https://www.youtube.com/watch?v=BaTaY7yU4uY_
 
 ---
 
