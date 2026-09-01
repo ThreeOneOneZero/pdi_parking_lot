@@ -3,8 +3,6 @@
 Projeto Aplicado Longitudinal — **Processamento de Imagens**
 Etapa atual: **M1 — definição do problema e estudo de viabilidade**
 
-# PENDENTE VERIFICAÇÃO DESSE CONTEUDO, NAO FINAL!
-
 ---
 
 ## Integrantes
@@ -112,13 +110,13 @@ sucesso e protocolo de avaliação definidos.
 
 Experimentos realizados:
 
-| | Experimento | Resultado |
-|---|---|---|
-| E1 | Extração de recortes com correção de perspectiva | Vagas variam **11×** em área no mesmo frame, justificando a normalização geométrica |
-| E2 | Separabilidade por densidade de bordas | **94,0%** de acerto com Sobel + limiar, sem treinamento |
+|     | Experimento                                      | Resultado                                                                           |
+| --- | ------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| E1  | Extração de recortes com correção de perspectiva | Vagas variam **11×** em área no mesmo frame, justificando a normalização geométrica |
+| E2  | Separabilidade por densidade de bordas           | **94,0%** de acerto com Sobel + limiar, sem treinamento                             |
 
-O E2 responde a pergunta que determina a viabilidade do projeto — *existe medida sobre os pixels que
-separe vaga ocupada de livre?* Com o limiar calibrado no UFPR04 e aplicado sem alteração aos demais:
+O E2 responde a pergunta que determina a viabilidade do projeto — _existe medida sobre os pixels que
+separe vaga ocupada de livre?_ Com o limiar calibrado no UFPR04 e aplicado sem alteração aos demais:
 **94,0%** no próprio lote, **66,0%** no UFPR05, **85,1%** no PUCPR. A intensidade média, usada como
 comparação, fica em 64,7% e cai a 32,9%.
 
@@ -221,12 +219,12 @@ Mede densidade de bordas (Sobel) e intensidade média de cada vaga **usando apen
 calibra um limiar em um estacionamento e o aplica sem alteração aos demais. Os rótulos de ocupação
 são lidos só depois, para pontuar.
 
-| Parâmetro | Padrão | Descrição |
-|---|---|---|
-| `--data` | obrigatório | diretório `PKLot/` |
-| `--calibrate-on` | `UFPR04` | estacionamento onde o limiar é calibrado |
-| `--frames-per-weather` | `6` | frames amostrados por condição climática |
-| `--patch-size` | `48x64` | tamanho canônico do recorte |
+| Parâmetro              | Padrão      | Descrição                                |
+| ---------------------- | ----------- | ---------------------------------------- |
+| `--data`               | obrigatório | diretório `PKLot/`                       |
+| `--calibrate-on`       | `UFPR04`    | estacionamento onde o limiar é calibrado |
+| `--frames-per-weather` | `6`         | frames amostrados por condição climática |
+| `--patch-size`         | `48x64`     | tamanho canônico do recorte              |
 
 Saídas: `images/results/e2_edge_density_<lote>.png` (histogramas por clima, com o limiar marcado) e
 `results/e2_measurements.csv` (uma linha por vaga, com as duas medidas e o rótulo).
