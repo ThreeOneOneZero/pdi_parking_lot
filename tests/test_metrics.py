@@ -62,6 +62,25 @@ def test_bootstrap_needs_more_than_one_cluster():
     assert math.isnan(low) and math.isnan(high)
 
 
+def test_paired_difference_of_a_strictly_better_decision():
+    labels = [1, 0] * 30
+    worse = [0, 0] * 30          # misses every occupied space
+    better = [1, 0] * 30         # gets every space right
+    clusters = [f"d{i // 6}" for i in range(60)]
+    diff, low, high = metrics.paired_difference(labels, worse, better, clusters,
+                                                resamples=200)
+    assert diff == pytest.approx(0.5)
+    assert low > 0
+
+
+def test_paired_difference_of_identical_decisions_is_zero():
+    labels = [1, 0, 1, 1] * 15
+    same = [1, 0, 0, 1] * 15
+    clusters = [f"d{i // 6}" for i in range(60)]
+    diff, low, high = metrics.paired_difference(labels, same, same, clusters, resamples=100)
+    assert diff == 0 and low == 0 and high == 0
+
+
 def test_calibration_finds_a_separating_threshold():
     values = [0.01, 0.02, 0.03, 0.30, 0.40, 0.50]
     labels = [0, 0, 0, 1, 1, 1]

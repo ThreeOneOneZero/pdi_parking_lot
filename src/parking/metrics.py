@@ -117,3 +117,45 @@ def bootstrap_ci(
     tail = (1 - confidence) / 2 * 100
     low, high = np.percentile(values, [tail, 100 - tail])
     return float(low), float(high)
+
+
+def paired_difference(
+    labels,
+    predicted_base,
+    predicted_new,
+    clusters,
+    metric=balanced_accuracy,
+    resamples: int = 1000,
+    confidence: float = 0.95,
+    seed: int = 0,
+) -> tuple[float, float, float]:
+    """How much `metric` changes from the base decision to the new one, with an interval.
+
+    Both decisions are scored on the same resampled clusters, so the interval answers
+    whether the new one is better on these spaces, which two separate intervals that
+    overlap cannot answer. Returns (difference, low, high).
+    """
+    labels = np.asarray(labels, dtype=bool)
+    base = np.asarray(predicted_base, dtype=bool)
+    new = np.asarray(predicted_new, dtype=bool)
+    clusters = np.asarray(clusters)
+
+    observed = metric(labels, new) - metric(labels, base)
+    groups = [np.flatnonzero(clusters == c) for c in np.unique(clusters)]
+    if len(groups) < 2:
+        return observed, math.nan, math.nan
+
+    rng = np.random.default_rng(seed)
+    values = []
+    for _ in range(resamples):
+        chosen = rng.integers(0, len(groups), size=len(groups))
+        index = np.concatenate([groups[g] for g in chosen])
+        value = metric(labels[index], new[index]) - metric(labels[index], base[index])
+        if not math.isnan(value):
+            values.append(value)
+
+    if not values:
+        return observed, math.nan, math.nan
+    tail = (1 - confidence) / 2 * 100
+    low, high = np.percentile(values, [tail, 100 - tail])
+    return observed, float(low), float(high)

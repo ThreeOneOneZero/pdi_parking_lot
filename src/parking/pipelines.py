@@ -10,7 +10,7 @@ from typing import Callable
 
 import numpy as np
 
-from . import features
+from . import features, normalization
 
 
 def no_normalization(gray: np.ndarray) -> np.ndarray:
@@ -29,6 +29,8 @@ def compose(normalize: Callable, measure: Callable) -> Callable:
 
 PIPELINES: dict[str, Callable] = {
     "none+edge_density": compose(no_normalization, features.edge_density),
+    "clahe+edge_density": compose(normalization.clahe, features.edge_density),
+    "stretch+edge_density": compose(normalization.stretch, features.edge_density),
 }
 
 
