@@ -1,4 +1,6 @@
 pipeline,patches,total_s,ms_per_patch
-none+edge_density,11445,1.077,0.0941
-clahe+edge_density,11445,1.319,0.1152
-stretch+edge_density,11445,3.043,0.2658
+none+edge_density,11445,1.081,0.0945
+clahe+edge_density,11445,1.32,0.1154
+stretch+edge_density,11445,3.097,0.2706
+none+region_fraction,11445,2.356,0.2058
+clahe+region_fraction,11445,2.686,0.2347

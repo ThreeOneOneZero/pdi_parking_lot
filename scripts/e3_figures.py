@@ -186,8 +186,9 @@ def main(argv=None) -> int:
         args.normalization, NORMALIZERS[args.normalization], t_base, t_new, examples,
     )
 
+    # Only the normalizations of E3, which all keep the edge density measure.
     pipelines = [p for p in dict.fromkeys(r["pipeline"] for r in evaluation)
-                 if p != args.baseline]
+                 if p != args.baseline and p.endswith("+edge_density")]
     differences = args.output / "e3_paired_difference.png"
     difference_figure(evaluation, pipelines, differences)
 
