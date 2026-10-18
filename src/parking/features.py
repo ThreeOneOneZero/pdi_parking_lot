@@ -18,11 +18,16 @@ def to_gray(patch: np.ndarray) -> np.ndarray:
 
 
 def gradient_magnitude(patch: np.ndarray) -> np.ndarray:
-    """Sobel gradient magnitude, in float32."""
+    """Sobel gradient magnitude, in float32.
+
+    Computed with numpy instead of cv2.magnitude, whose vectorised path gives
+    results that differ in the last bit from one call to the next, enough to move
+    a pixel across the edge threshold and change the measure between runs.
+    """
     gray = to_gray(patch).astype(np.float32)
     gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
     gy = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
-    return cv2.magnitude(gx, gy)
+    return np.sqrt(gx * gx + gy * gy)
 
 
 def edge_density(patch: np.ndarray, threshold: float = 60.0) -> float:

@@ -5,7 +5,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from parking.features import edge_density, mean_intensity
+from parking.features import edge_density, gradient_magnitude, mean_intensity
 
 
 def test_flat_patch_has_no_edges():
@@ -49,6 +49,14 @@ def test_accepts_colour_and_grayscale():
     gray = np.zeros((64, 48), dtype=np.uint8)
 
     assert edge_density(colour) == edge_density(gray)
+
+
+def test_gradient_magnitude_is_the_same_on_every_call():
+    """Guards the reproducibility fix: the measure must not change between runs."""
+    rng = np.random.default_rng(1)
+    patch = rng.integers(0, 256, size=(64, 48), dtype=np.uint8)
+    first = gradient_magnitude(patch)
+    assert all(np.array_equal(first, gradient_magnitude(patch)) for _ in range(30))
 
 
 def test_mean_intensity_of_known_patch():
