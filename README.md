@@ -266,7 +266,7 @@ Rodando de novo os arquivos saem iguais, menos o `timing.csv`, que é tempo de r
 ## Vídeos
 
 - M1: <https://www.youtube.com/watch?v=BaTaY7yU4uY>
-- M2: _link a adicionar_
+- M2: <https://youtu.be/ykyUDydEANM>
 
 ---
 
