@@ -37,7 +37,10 @@ Além disso tive que corrigir duas coisas da M1:
 
 ## 3. Dados e protocolo
 
-Usei 240 quadros do PKLot, 20 por lote, clima e partição.
+Usei 240 quadros do PKLot, 20 por lote, clima e partição. Com 20 quadros já dá mais de mil vagas
+por lote e várias datas diferentes, o que basta pro intervalo por data, e a medição toda roda em
+poucos minutos. Os quadros estão listados pelo caminho em `results/split.csv`, e os casos difíceis
+(chuva, sol forte, bloquete do PUCPR) entram na amostra.
 
 | Lote   | Partição   | Datas | Quadros | Vagas |
 | ------ | ---------- | ----: | ------: | ----: |
@@ -70,6 +73,19 @@ quadro + XML -> recorte com homografia (48x64)          extraction.py (M1)
              -> erro por área, posição e vaga            analysis.py         E5
 ```
 
+Medidas usadas, todas sem unidade (proporção de 0 a 1), calculadas no recorte em cinza:
+
+| Medida | Cálculo |
+| --- | --- |
+| densidade de bordas | pixels com magnitude do Sobel > 60 / pixels do recorte |
+| fração da região (E4) | pixels do maior componente 8-conectado depois de fechamento e abertura / pixels do recorte |
+| extensão (E4, descritivo) | pixels da região / pixels do retângulo envolvente |
+| solidez (E4, descritivo) | pixels da região / pixels do fecho convexo |
+
+O limiar 60 vem da M1. O CLAHE com clip 2,0 e grade 4x4 é o padrão comum para um recorte de
+48x64 (cada bloco fica com uns 12x16 pixels). O stretch usa percentis 2 e 98 pra não ser puxado
+por um pixel isolado.
+
 Cada combinação de normalização e medida tem um nome em `pipelines.py`, assim os scripts não
 precisam mudar quando entra uma nova.
 
@@ -93,6 +109,8 @@ No mesmo estacionamento em dias novos funciona bem. Nos outros lotes cai, e no U
 erro é falso negativo: o limiar do UFPR04 é alto demais lá, como já tinha aparecido na M1.
 
 ### 5.2 E3: normalizar o contraste ajuda?
+
+Comando: `python -m scripts.evaluate` (roda todas as configurações de uma vez) e `python -m scripts.e3_figures --data ../PKLot/PKLot`.
 
 Mudei só a normalização: nenhuma, CLAHE (clip 2,0, grade 4x4) e stretch (percentis 2 e 98). A
 tabela mostra a diferença contra o baseline, com intervalo pareado.
@@ -128,6 +146,9 @@ soltos. A ideia foi aproveitar isso: o mapa de bordas passa por fechamento, depo
 fica só o maior componente conectado. A medida é a fração do recorte que ele ocupa. O fechamento
 vem antes porque a borda do carro é fina e a abertura sozinha apagaria o carro.
 
+Comando: `python -m scripts.e4_sweep --data ../PKLot/PKLot` (só calibração), `python -m scripts.evaluate` e
+`python -m scripts.e4_figures --data ../PKLot/PKLot`.
+
 Os tamanhos dos elementos estruturantes saíram de uma varredura de 12 combinações só na
 calibração (`results/e4_sweep.csv`): fechamento 5x5 e abertura 3x3 sem normalização, 3x3 e 3x3
 com CLAHE.
@@ -154,6 +175,8 @@ borda espalhada, era a medida toda mudar de escala de um lote para outro. As dua
 mesmas bordas, então as duas herdam isso.
 
 ### 5.4 E5: onde ficam os erros?
+
+Comando: `python -m scripts.e5_errors --data ../PKLot/PKLot`.
 
 Usei o baseline na partição de teste e separei as vagas em quartis de área e de altura no quadro,
 dentro de cada lote. As duas coisas acabam medindo o mesmo (correlação entre +0,93 e +0,95),
