@@ -1,9 +1,8 @@
 # Proposta Técnica — Projeto Aplicado Longitudinal
 
 **Disciplina:** Processamento de Imagens — 2026/02
-**Etapa:** M1
-**Autoria:** Leonardo Pacheco _(composição da equipe ainda em definição; ver `README.md`)_
-**Última revisão:** 2026-08-29
+**Etapa:** M1, revisada na M2
+**Autoria:** Leonardo Pacheco
 
 ---
 
@@ -131,7 +130,9 @@ mudanças de clima e de estacionamento.
 6. Analisar os erros por posição e área da vaga, para identificar se as falhas se concentram em
    vagas distantes ou parcialmente ocluídas.
 
-Os objetivos 4 a 6 são o trabalho previsto para a M2 e a M3.
+Os objetivos 4 a 6 foram executados na M2 como E3, E4 e E5 (ver `relatorio_m2.md`). No objetivo
+5, a medida alternativa testada foi a região segmentada por morfologia, no lugar de variância e
+energia de textura, para cobrir o foco da M2 em segmentação e componentes.
 
 **Dois cenários de avaliação** aparecem ao longo do documento e convém defini-los aqui:
 
@@ -172,13 +173,13 @@ Os critérios abaixo são a base contra a qual o resultado final será julgado. 
 são metas iniciais e poderão ser revistos na M2 à luz dos primeiros resultados — mas a **forma** dos
 critérios não deve mudar.
 
-| #   | Critério                                                                                                    | Como será verificado                                                             |
-| --- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| C1  | Acurácia por vaga ≥ 90% no mesmo estacionamento, em dias diferentes dos usados na calibração                | Acurácia sobre o conjunto de teste, reportada por clima                          |
-| C2  | A queda de acurácia em estacionamento diferente é **menor** com normalização fotométrica do que sem ela     | Comparação direta entre as duas configurações, mesma amostra                     |
-| C3  | Desempenho reportado **sempre desagregado** por clima (Sunny / Cloudy / Rainy), nunca apenas em média       | Tabela de resultados por condição                                                |
-| C4  | Falsos positivos e falsos negativos reportados separadamente                                                | Matriz de confusão por cenário                                                   |
-| C5  | Todo resultado numérico apresentado é reproduzível a partir do repositório                                  | Script executável por linha de comando, com semente fixa e parâmetros explícitos |
+| #   | Critério                                                                                                | Como será verificado                                                             |
+| --- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| C1  | Acurácia por vaga ≥ 90% no mesmo estacionamento, em dias diferentes dos usados na calibração            | Acurácia sobre o conjunto de teste, reportada por clima                          |
+| C2  | A queda de acurácia em estacionamento diferente é **menor** com normalização fotométrica do que sem ela | Comparação direta entre as duas configurações, mesma amostra                     |
+| C3  | Desempenho reportado **sempre desagregado** por clima (Sunny / Cloudy / Rainy), nunca apenas em média   | Tabela de resultados por condição                                                |
+| C4  | Falsos positivos e falsos negativos reportados separadamente                                            | Matriz de confusão por cenário                                                   |
+| C5  | Todo resultado numérico apresentado é reproduzível a partir do repositório                              | Script executável por linha de comando, com semente fixa e parâmetros explícitos |
 
 O critério C2 é o coração do projeto: ele pode ser refutado pelos dados. Se a normalização
 fotométrica **não** recuperar desempenho, esse é um resultado legítimo e será reportado como tal,
@@ -407,22 +408,22 @@ Dois padrões nos erros orientam a M2:
 - O pior caso isolado é UFPR05 sob chuva, com **51,7%** — o equivalente ao acaso. É a condição em
   que a medida falha por completo, e o alvo mais claro para a M2.
 
-### 7.3 Experimentos previstos para a M2
+### 7.3 Experimentos previstos para a M2 (executados)
 
-| #   | Experimento                                                              | Evidência que produz                                       |
-| --- | ------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| E3  | Normalizações fotométricas aplicadas antes da medida                     | Verifica se a queda de 28 pontos é recuperável             |
-| E4  | Comparação de medidas alternativas (variância local, energia de textura) | Identifica se outra medida generaliza melhor               |
-| E5  | Análise de erros por posição e por área da vaga                          | Testa se as vagas distantes e ocluídas concentram os erros |
+| #   | Experimento                                          | Situação na M2                                                        |
+| --- | ---------------------------------------------------- | --------------------------------------------------------------------- |
+| E3  | Normalizações fotométricas aplicadas antes da medida | Feito: CLAHE recupera a chuva do UFPR05, mas não generaliza           |
+| E4  | Comparação de medidas alternativas                   | Feito com região segmentada no lugar de textura: empata com as bordas |
+| E5  | Análise de erros por posição e por área da vaga      | Feito para área e posição; oclusão sem rótulo, só qualitativa         |
 
 ### 7.4 Riscos identificados
 
-| Risco                                                                | Mitigação prevista                                                                           |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Volume de recortes elevado torna a experimentação lenta              | Amostragem estratificada por dia, clima e classe; caching das medidas                        |
-| Desbalanceamento entre classes varia por clima e lote                | Reportar métricas balanceadas além da acurácia; considerar reamostragem                      |
-| Vagas fortemente ocluídas podem ser irrecuperáveis                   | Analisar erros por posição na imagem; se confirmado, documentar como limitação, não mascarar |
-| Sem equipe definida, o escopo pode ficar grande demais               | Escopo dimensionado para uma pessoa; extensões marcadas explicitamente como opcionais        |
+| Risco                                                   | Mitigação prevista                                                                           |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Volume de recortes elevado torna a experimentação lenta | Amostragem estratificada por dia, clima e classe; caching das medidas                        |
+| Desbalanceamento entre classes varia por clima e lote   | Reportar métricas balanceadas além da acurácia; considerar reamostragem                      |
+| Vagas fortemente ocluídas podem ser irrecuperáveis      | Analisar erros por posição na imagem; se confirmado, documentar como limitação, não mascarar |
+| Sem equipe definida, o escopo pode ficar grande demais  | Escopo dimensionado para uma pessoa; extensões marcadas explicitamente como opcionais        |
 
 ---
 

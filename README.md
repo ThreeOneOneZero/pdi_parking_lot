@@ -1,17 +1,17 @@
 # Classificação de Ocupação de Vagas de Estacionamento sob Variação de Iluminação e Ponto de Vista
 
 Projeto Aplicado Longitudinal — **Processamento de Imagens**
-Etapa atual: **M1 — definição do problema e estudo de viabilidade**
+Etapa atual: **M2, implementação parcial e experimentos**
 
 ---
 
 ## Integrantes
 
-| Nome             | Participação                                                                     |
-| ---------------- | -------------------------------------------------------------------------------- |
-| Leonardo Pacheco | Definição do problema, obtenção e caracterização dos dados, documentação técnica |
+| Nome             | Participação                                                         |
+| ---------------- | -------------------------------------------------------------------- |
+| Leonardo Pacheco | Todas as etapas: problema, dados, protocolo, código, experimentos e documentação |
 
-> Composição da equipe ainda em definição. Aguardando email pois está dimensionado para uma pessoa.
+Equipe de uma pessoa.
 
 ---
 
@@ -103,26 +103,20 @@ download** em **[`docs/dados.md`](docs/dados.md)**.
 
 ## Estágio atual
 
-**M1 em andamento.**
+M2 em andamento. Já funciona a divisão congelada por data, a medição dos 240 quadros, a calibração,
+a avaliação e os experimentos abaixo. Falta o comando que recebe um quadro e devolve a contagem de
+vagas livres (está no plano da M3).
 
-Concluído: problema definido e delimitado · conjunto obtido, inspecionado e caracterizado · formato
-da anotação validado · pipeline preliminar projetado com alternativas registradas · critérios de
-sucesso e protocolo de avaliação definidos.
+|     | Experimento | Resultado |
+| --- | --- | --- |
+| E1  | Recorte com correção de perspectiva (M1) | Vagas variam 11× em área no mesmo quadro |
+| E2  | Densidade de bordas + limiar (M1, reavaliado) | 90,7% de acurácia balanceada em outros dias do UFPR04, 80,2% no UFPR05 |
+| E3  | Normalização fotométrica | CLAHE melhora o UFPR05 chuva (+5,8), mas piora no resto |
+| E4  | Região segmentada (morfologia + maior componente) | Empate com a densidade de bordas |
+| E5  | Erro por área, posição e vaga | Mais erro nas vagas distantes do UFPR05 e numa fileira de bloquete do PUCPR |
 
-Experimentos realizados:
-
-|     | Experimento                                      | Resultado                                                                           |
-| --- | ------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| E1  | Extração de recortes com correção de perspectiva | Vagas variam **11×** em área no mesmo frame, justificando a normalização geométrica |
-| E2  | Separabilidade por densidade de bordas           | **94,0%** de acerto com Sobel + limiar, sem treinamento                             |
-
-O E2 responde a pergunta que determina a viabilidade do projeto — _existe medida sobre os pixels que
-separe vaga ocupada de livre?_ Com o limiar calibrado no UFPR04 e aplicado sem alteração aos demais:
-**94,0%** no próprio lote, **66,0%** no UFPR05, **85,1%** no PUCPR. A intensidade média, usada como
-comparação, fica em 64,7% e cai a 32,9%.
-
-Análise dos resultados, tabelas por clima e padrão dos erros em
-[`docs/proposta.md`](docs/proposta.md), seção 7.2.
+Os 94,0% da M1 foram medidos nas mesmas vagas da calibração, isso foi corrigido na M2. Detalhes em
+[`docs/relatorio_m2.md`](docs/relatorio_m2.md).
 
 ---
 
@@ -134,9 +128,10 @@ pdi_parking_lot/
 ├── AI_USAGE.md             declaracao de uso de IA generativa
 ├── docs/
 │   ├── proposta.md         proposta tecnica completa
-│   └── dados.md            caracterizacao do conjunto de imagens
+│   ├── dados.md            caracterizacao do conjunto de imagens
+│   └── relatorio_m2.md     relatorio parcial da M2
 ├── src/parking/            modulos do pipeline
-├── scripts/                experimentos E1-E4, executaveis por linha de comando
+├── scripts/                divisao, medicao, avaliacao e experimentos E1-E5
 ├── tests/                  testes das operacoes de src/
 ├── images/results/         figuras versionadas (paineis, histogramas)
 ├── results/                metricas geradas pelos experimentos
@@ -227,11 +222,51 @@ são lidos só depois, para pontuar.
 Saídas: `images/results/e2_edge_density_<lote>.png` (histogramas por clima, com o limiar marcado) e
 `results/e2_measurements.csv` (uma linha por vaga, com as duas medidas e o rótulo).
 
+### M2: exemplo mínimo, sem o conjunto de dados
+
+As medidas da M2 estão versionadas em `results/measurements.csv`, então a avaliação roda sem
+baixar o PKLot:
+
+```bash
+python -m scripts.evaluate
+```
+
+Deve gerar o mesmo `results/evaluation.csv` do repositório. A primeira linha impressa é o UFPR04
+com 1674 vagas e 90,7% de acurácia balanceada.
+
+### M2: cadeia completa
+
+Na ordem. A divisão já está no repositório, o primeiro comando fica só pra mostrar como foi feita
+(ele não sobrescreve sem `--force`).
+
+```bash
+python -m scripts.make_split --data ../PKLot/PKLot
+python -m scripts.measure --data ../PKLot/PKLot
+python -m scripts.evaluate
+python -m scripts.evaluate --baseline clahe+edge_density --pipelines clahe+edge_density,clahe+region_fraction --output results/evaluation_clahe_base.csv
+python -m scripts.e4_sweep --data ../PKLot/PKLot
+python -m scripts.e3_figures --data ../PKLot/PKLot
+python -m scripts.e4_figures --data ../PKLot/PKLot
+python -m scripts.e5_errors --data ../PKLot/PKLot
+```
+
+| Script | Faz | Saída |
+| --- | --- | --- |
+| `make_split` | divide os quadros por data entre calibração e teste | `results/split.csv` |
+| `measure` | mede cada vaga com cada configuração | `results/measurements.csv`, `results/timing.csv` |
+| `evaluate` | calibra no UFPR04 e pontua o teste, comparando com o baseline | `results/evaluation.csv` |
+| `e4_sweep` | escolhe os tamanhos da morfologia só na calibração | `results/e4_sweep.csv` |
+| `e3_figures`, `e4_figures` | figuras dos experimentos | `images/results/e3_*.png`, `e4_*.png` |
+| `e5_errors` | erro por área, posição e vaga | `results/e5_*.csv`, `images/results/e5_*.png` |
+
+Rodando de novo os arquivos saem iguais, menos o `timing.csv`, que é tempo de relógio.
+
 ---
 
-## Vídeo da M1
+## Vídeos
 
-> _https://www.youtube.com/watch?v=BaTaY7yU4uY_
+- M1: <https://www.youtube.com/watch?v=BaTaY7yU4uY>
+- M2: _link a adicionar_
 
 ---
 
