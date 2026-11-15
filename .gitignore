@@ -23,6 +23,9 @@ models/
 results/**/*.png
 results/**/*.jpg
 
+# Saida do comando final (scripts.infer), gerada a cada execucao
+results/infer/
+
 # ---------------------------------------------------------------------------
 # Python
 # ---------------------------------------------------------------------------
