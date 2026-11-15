@@ -1,0 +1,7 @@
+{
+  "pipeline": "none+edge_density",
+  "low": 20,
+  "high": 95,
+  "min_spread": 0.1,
+  "threshold": 0.445732
+}
