@@ -47,6 +47,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--evaluation", type=Path, default=ROOT / "results" / "evaluation.csv")
     p.add_argument("--results", type=Path, default=ROOT / "results")
     p.add_argument("--output", type=Path, default=ROOT / "images" / "results")
+    p.add_argument("--prefix", default="e5", help="start of the output file names")
+    p.add_argument("--label", default="baseline", help="name of the solution in the titles")
     return p
 
 
@@ -101,7 +103,7 @@ def by_space(rows) -> list[dict]:
     return result
 
 
-def error_map(data, frame_path, spaces, lot, destination: Path) -> None:
+def error_map(data, frame_path, spaces, lot, destination: Path, label: str) -> None:
     """Each space of one frame filled with its error rate over all test frames."""
     frame = data / frame_path
     image = cv2.cvtColor(cv2.imread(str(frame), cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB)
@@ -121,7 +123,7 @@ def error_map(data, frame_path, spaces, lot, destination: Path) -> None:
     bar = figure.colorbar(mappable, ax=ax, fraction=0.03, pad=0.01)
     bar.set_label("taxa de erro da vaga nos quadros de teste (0,5 ou mais em vermelho)",
                   fontsize=8)
-    ax.set_title(f"{lot}: erro por vaga (baseline, partição de teste)", fontsize=10)
+    ax.set_title(f"{lot}: erro por vaga ({label}, partição de teste)", fontsize=10)
     figure.tight_layout()
     destination.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(destination, dpi=130, bbox_inches="tight")
@@ -192,17 +194,18 @@ def main(argv=None) -> int:
             f"#{s['space_id']} {100 * s['error_rate']:.0f}%" for s in worst))
 
         frame_path = sorted(r["frame"] for r in rows if r["weather"] == "Sunny")[0]
-        error_map(args.data, frame_path, spaces, lot, args.output / f"e5_error_map_{lot}.png")
+        error_map(args.data, frame_path, spaces, lot,
+                  args.output / f"{args.prefix}_error_map_{lot}.png", args.label)
 
-    write_csv(args.results / "e5_by_group.csv", GROUP_FIELDS,
+    write_csv(args.results / f"{args.prefix}_by_group.csv", GROUP_FIELDS,
               [{k: (round(v, 4) if isinstance(v, float) else v) for k, v in r.items()}
                for r in table])
-    write_csv(args.results / "e5_by_space.csv", SPACE_FIELDS, spaces_table)
-    rates_figure(table, args.output / "e5_fn_by_area.png")
+    write_csv(args.results / f"{args.prefix}_by_space.csv", SPACE_FIELDS, spaces_table)
+    rates_figure(table, args.output / f"{args.prefix}_fn_by_area.png")
 
-    print(f"\ngroups: {args.results / 'e5_by_group.csv'}")
-    print(f"spaces: {args.results / 'e5_by_space.csv'}")
-    print(f"figures: {args.output}/e5_*.png")
+    print(f"\ngroups: {args.results / (args.prefix + '_by_group.csv')}")
+    print(f"spaces: {args.results / (args.prefix + '_by_space.csv')}")
+    print(f"figures: {args.output}/{args.prefix}_*.png")
     return 0
 
 
