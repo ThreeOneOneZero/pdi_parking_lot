@@ -93,3 +93,12 @@ Limitações:
   chuva e à noite; os dados não permitem afirmar nada a respeito.
 - **Anotação parcial.** Apenas um subconjunto das vagas de cada câmera é anotado, então não há
   validação possível além do que está documentado.
+
+## Quadros usados na avaliação
+
+- `results/split.csv`: os 240 quadros de calibração e teste, com lote, clima, data e partição.
+- `results/history.csv`: os 900 quadros de histórico da M3, fora da divisão. Deles só os
+  polígonos são lidos, nunca o rótulo.
+- `examples/PKLot/`: 4 quadros de teste copiados sem alteração, pro exemplo mínimo do README.
+
+Protocolo completo em [`relatorio_final.md`](relatorio_final.md), seção 3.

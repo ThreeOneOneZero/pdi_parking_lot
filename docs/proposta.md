@@ -1,7 +1,7 @@
 # Proposta Técnica — Projeto Aplicado Longitudinal
 
 **Disciplina:** Processamento de Imagens — 2026/02
-**Etapa:** M1, revisada na M2
+**Etapa:** M1, revisada na M2. O resultado final está em [`relatorio_final.md`](relatorio_final.md)
 **Autoria:** Leonardo Pacheco
 
 ---
@@ -133,6 +133,8 @@ mudanças de clima e de estacionamento.
 Os objetivos 4 a 6 foram executados na M2 como E3, E4 e E5 (ver `relatorio_m2.md`). No objetivo
 5, a medida alternativa testada foi a região segmentada por morfologia, no lugar de variância e
 energia de textura, para cobrir o foco da M2 em segmentação e componentes.
+Na M3 a solução final passou a ser um limiar relativo ao histórico de cada vaga (E6), no lugar
+da normalização fotométrica. Ver `relatorio_final.md`.
 
 **Dois cenários de avaliação** aparecem ao longo do documento e convém defini-los aqui:
 

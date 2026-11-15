@@ -1,7 +1,7 @@
 # Classificação de Ocupação de Vagas de Estacionamento sob Variação de Iluminação e Ponto de Vista
 
 Projeto Aplicado Longitudinal — **Processamento de Imagens**
-Etapa atual: **M2, implementação parcial e experimentos**
+Etapa atual: **M3, versão final**
 
 ---
 
@@ -56,23 +56,25 @@ estacionamento.
 
 ---
 
-## Solução proposta
+## Solução final
 
 ```text
-frame 1280x720  +  anotacao das vagas
+frame 1280x720  +  XML com os poligonos das vagas
         │
-        ├─ recorte por vaga + correcao de perspectiva  ──→  patch canonico
-        ├─ normalizacao fotometrica       ← VARIAVEL EXPERIMENTAL
-        ├─ medida sobre os pixels (Sobel) ← VARIAVEL EXPERIMENTAL
-        ├─ comparacao com limiar          ← REGRA FIXA, sem treinamento
-        └─→  { vaga: ocupada|livre }  ──→  contagem de vagas livres
+        ├─ recorte por vaga + correcao de perspectiva  ──→  patch 48x64
+        ├─ densidade de bordas (Sobel > 60)
+        ├─ medida colocada entre os niveis livre e ocupado da propria vaga,
+        │  tirados do historico da camera sem rotulo
+        ├─ comparacao com um limiar calibrado no UFPR04, sem treinamento
+        └─→  { vaga: ocupada|livre }  ──→  contagem de vagas livres + imagem
 ```
 
 **Entra:** frame RGB 1280×720 de câmera fixa + definição das vagas (polígonos de 4 pontos).
-**Sai:** rótulo `ocupada`/`livre` por vaga, e a contagem agregada de vagas livres.
+**Sai:** JSON com o estado e o valor de cada vaga, a contagem de vagas livres e uma imagem com as
+vagas coloridas.
 
-→ Diagrama detalhado, finalidade de cada etapa, dúvidas em aberto e alternativas consideradas em
-**[`docs/proposta.md`](docs/proposta.md)**, seção 4.
+→ Pipeline, decisões e parâmetros em **[`docs/relatorio_final.md`](docs/relatorio_final.md)**,
+seções 4 e 5. A proposta original continua em [`docs/proposta.md`](docs/proposta.md).
 
 ---
 
@@ -96,6 +98,9 @@ desempenho desde a primeira semana).
 
 **As imagens não são versionadas** — ~5 GB é incompatível com Git e não será commitado.
 
+A exceção são 4 quadros com o XML em `examples/PKLot/`, mantidos na estrutura original do PKLot,
+para o exemplo mínimo. A licença CC BY 4.0 permite redistribuir com citação.
+
 → Origem, licença, contagens verificadas, formato da anotação, limitações e **instruções de
 download** em **[`docs/dados.md`](docs/dados.md)**.
 
@@ -103,9 +108,8 @@ download** em **[`docs/dados.md`](docs/dados.md)**.
 
 ## Estágio atual
 
-M2 em andamento. Já funciona a divisão congelada por data, a medição dos 240 quadros, a calibração,
-a avaliação e os experimentos abaixo. Falta o comando que recebe um quadro e devolve a contagem de
-vagas livres (está no plano da M3).
+Versão final (M3). O comando `scripts.infer` recebe um quadro e devolve a contagem de vagas
+livres. Toda a avaliação está reproduzível pelos comandos abaixo.
 
 |     | Experimento | Resultado |
 | --- | --- | --- |
@@ -114,8 +118,11 @@ vagas livres (está no plano da M3).
 | E3  | Normalização fotométrica | CLAHE melhora o UFPR05 chuva (+5,8), mas piora no resto |
 | E4  | Região segmentada (morfologia + maior componente) | Empate com a densidade de bordas |
 | E5  | Erro por área, posição e vaga | Mais erro nas vagas distantes do UFPR05 e numa fileira de bloquete do PUCPR |
+| E6  | Limiar relativo ao histórico da vaga, sem rótulo (M3, solução final) | 94,2% no UFPR04, 86,7% no UFPR05 e 88,7% no PUCPR, de +3,5 a +6,9 pontos sobre o baseline |
 
-Os 94,0% da M1 foram medidos nas mesmas vagas da calibração, isso foi corrigido na M2. Detalhes em
+Ainda erra na fileira de bloquete do PUCPR, onde o piso vazio tem mais borda que o carro, e em
+carros escuros com pouca luz. Tabela consolidada, ablação e análise de erros em
+[`docs/relatorio_final.md`](docs/relatorio_final.md). Relatório da M2 em
 [`docs/relatorio_m2.md`](docs/relatorio_m2.md).
 
 ---
@@ -129,9 +136,11 @@ pdi_parking_lot/
 ├── docs/
 │   ├── proposta.md         proposta tecnica completa
 │   ├── dados.md            caracterizacao do conjunto de imagens
-│   └── relatorio_m2.md     relatorio parcial da M2
+│   ├── relatorio_m2.md     relatorio parcial da M2
+│   └── relatorio_final.md  relatorio final (M3)
 ├── src/parking/            modulos do pipeline
-├── scripts/                divisao, medicao, avaliacao e experimentos E1-E5
+├── scripts/                divisao, medicao, avaliacao, experimentos E1-E6 e comando final
+├── examples/               4 quadros do PKLot com XML, pra rodar sem baixar o conjunto
 ├── tests/                  testes das operacoes de src/
 ├── images/results/         figuras versionadas (paineis, histogramas)
 ├── results/                metricas geradas pelos experimentos
@@ -146,7 +155,8 @@ pdi_parking_lot/
 
 Python 3.11+ · OpenCV (homografia, Sobel) · NumPy · Matplotlib (figuras) · pytest.
 
-As escolhas não estão fechadas e poderão ser revistas conforme a investigação avançar.
+Testado com Python 3.12.10, OpenCV 5.0.0, NumPy 2.5.2 e Matplotlib 3.11.1, num Intel
+i5-10600KF sem GPU.
 
 ---
 
@@ -222,19 +232,36 @@ são lidos só depois, para pontuar.
 Saídas: `images/results/e2_edge_density_<lote>.png` (histogramas por clima, com o limiar marcado) e
 `results/e2_measurements.csv` (uma linha por vaga, com as duas medidas e o rótulo).
 
-### M2: exemplo mínimo, sem o conjunto de dados
+### Exemplo mínimo, sem o conjunto de dados
 
-As medidas da M2 estão versionadas em `results/measurements.csv`, então a avaliação roda sem
-baixar o PKLot:
+O histórico das vagas, a configuração final e 4 quadros de exemplo estão no repositório, então a
+saída final roda sem baixar o PKLot:
 
 ```bash
-python -m scripts.evaluate
+python -m scripts.infer --frame examples/PKLot/UFPR05/Sunny/2013-04-10/2013-04-10_08_25_02.jpg
 ```
 
-Deve gerar o mesmo `results/evaluation.csv` do repositório. A primeira linha impressa é o UFPR04
-com 1674 vagas e 90,7% de acurácia balanceada.
+Saída esperada no terminal:
 
-### M2: cadeia completa
+```text
+UFPR05 2013-04-10: 21 vagas livres de 40
+referência do XML: 16 livres, 5 vagas classificadas errado
+```
+
+E os arquivos `results/infer/2013-04-10_08_25_02.json` (estado e valor de cada vaga) e
+`results/infer/2013-04-10_08_25_02.png` (vagas coloridas). Os outros exemplos estão em
+`examples/PKLot/`. O XML precisa estar ao lado da imagem, e a imagem dentro de
+`<lote>/<clima>/<data>/`, porque o lote e a data escolhem o histórico.
+
+A avaliação também roda sem o PKLot, a partir das medidas versionadas:
+
+```bash
+python -m scripts.evaluate --measurements results/measurements_e6.csv --output results/evaluation_e6.csv
+```
+
+Deve gerar o mesmo `results/evaluation_e6.csv` do repositório.
+
+### Cadeia completa
 
 Na ordem. A divisão já está no repositório, o primeiro comando fica só pra mostrar como foi feita
 (ele não sobrescreve sem `--force`).
@@ -248,22 +275,32 @@ python -m scripts.e4_sweep --data ../PKLot/PKLot
 python -m scripts.e3_figures --data ../PKLot/PKLot
 python -m scripts.e4_figures --data ../PKLot/PKLot
 python -m scripts.e5_errors --data ../PKLot/PKLot
+python -m scripts.measure_history --data ../PKLot/PKLot
+python -m scripts.space_levels
+python -m scripts.evaluate --measurements results/measurements_e6.csv --output results/evaluation_e6.csv
+python -m scripts.e5_errors --data ../PKLot/PKLot --measurements results/measurements_e6.csv --evaluation results/evaluation_e6.csv --pipeline "none+edge_density@rescale" --prefix e6 --label "solução final"
+python -m scripts.e6_figures --data ../PKLot/PKLot
 ```
 
 | Script | Faz | Saída |
 | --- | --- | --- |
 | `make_split` | divide os quadros por data entre calibração e teste | `results/split.csv` |
 | `measure` | mede cada vaga com cada configuração | `results/measurements.csv`, `results/timing.csv` |
-| `evaluate` | calibra no UFPR04 e pontua o teste, comparando com o baseline | `results/evaluation.csv` |
+| `evaluate` | calibra no UFPR04 e pontua o teste, comparando com o baseline | `results/evaluation*.csv` |
 | `e4_sweep` | escolhe os tamanhos da morfologia só na calibração | `results/e4_sweep.csv` |
-| `e3_figures`, `e4_figures` | figuras dos experimentos | `images/results/e3_*.png`, `e4_*.png` |
-| `e5_errors` | erro por área, posição e vaga | `results/e5_*.csv`, `images/results/e5_*.png` |
+| `e3_figures`, `e4_figures`, `e6_figures` | figuras dos experimentos | `images/results/e3_*.png`, `e4_*.png`, `e6_*.png` |
+| `e5_errors` | erro por área, posição e vaga | `results/e5_*.csv` e `e6_*.csv`, `images/results/e5_*.png` e `e6_*.png` |
+| `measure_history` | mede as vagas de 900 quadros fora da divisão, sem ler o rótulo | `results/history.csv` |
+| `space_levels` | escolhe os percentis na calibração e reescala as medidas pela vaga | `results/measurements_e6.csv`, `results/e6_sweep.csv`, `results/final_config.json` |
+| `infer` | saída final de um quadro | `results/infer/<quadro>.json` e `.png` |
 
-Rodando de novo os arquivos saem iguais, menos o `timing.csv`, que é tempo de relógio.
+Rodando de novo os arquivos saem iguais, menos o `timing.csv`, que é tempo de relógio. O
+bootstrap usa semente fixa (0).
 
 ---
 
 ## Vídeos
+
 
 - M1: <https://www.youtube.com/watch?v=BaTaY7yU4uY>
 - M2: <https://youtu.be/ykyUDydEANM>
@@ -275,3 +312,5 @@ Rodando de novo os arquivos saem iguais, menos o `timing.csv`, que é tempo de r
 > ALMEIDA, P.; OLIVEIRA, L. S.; SILVA JR., E.; BRITTO JR., A.; KOERICH, A.
 > **PKLot — A robust dataset for parking lot classification.**
 > _Expert Systems with Applications_, 42(11):4937–4949, 2015.
+
+Os quadros de `examples/PKLot/` são do PKLot, sem alteração, sob a licença CC BY 4.0.
