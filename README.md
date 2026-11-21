@@ -141,6 +141,7 @@ pdi_parking_lot/
 ├── src/parking/            modulos do pipeline
 ├── scripts/                divisao, medicao, avaliacao, experimentos E1-E6 e comando final
 ├── examples/               4 quadros do PKLot com XML, pra rodar sem baixar o conjunto
+├── slides/                 apresentacao final (pptx e pdf)
 ├── tests/                  testes das operacoes de src/
 ├── images/results/         figuras versionadas (paineis, histogramas)
 ├── results/                metricas geradas pelos experimentos
@@ -301,9 +302,12 @@ bootstrap usa semente fixa (0).
 
 ## Vídeos
 
-
 - M1: <https://www.youtube.com/watch?v=BaTaY7yU4uY>
 - M2: <https://youtu.be/ykyUDydEANM>
+- M3 (apresentação final): _link a adicionar_
+
+Slides da apresentação final: [`slides/apresentacao_m3.pdf`](slides/apresentacao_m3.pdf)
+(original em [`slides/apresentacao_m3.pptx`](slides/apresentacao_m3.pptx), com o roteiro nas notas de cada slide).
 
 ---
 
