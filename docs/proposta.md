@@ -388,6 +388,9 @@ Desagregado por clima, com o limiar da densidade de bordas:
 | UFPR05 | 70,0% |  76,2% | 51,7% |
 | PUCPR  | 76,4% |  90,7% | 86,7% |
 
+Números da M1. Com a correção do `cv2.magnitude` feita na M2, o PUCPR chuva passa a 86,8%; os
+arquivos do E2 em `results/` e `images/results/` já estão com a correção.
+
 Três conclusões:
 
 1. **O problema é solúvel por PDI.** Uma única operação de gradiente e um limiar atingem 94,0% sem
