@@ -304,7 +304,7 @@ bootstrap usa semente fixa (0).
 
 - M1: <https://www.youtube.com/watch?v=BaTaY7yU4uY>
 - M2: <https://youtu.be/ykyUDydEANM>
-- M3 (apresentação final): _link a adicionar_
+- M3 (apresentação final): <https://youtu.be/7reBbG_UHhA>
 
 Slides da apresentação final: [`slides/apresentacao_m3.pdf`](slides/apresentacao_m3.pdf)
 (original em [`slides/apresentacao_m3.pptx`](slides/apresentacao_m3.pptx), com o roteiro nas notas de cada slide).
